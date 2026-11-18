@@ -1,0 +1,33 @@
+# Data: raw and cached files are never committed (licences, size, reproducibility via config)
+data/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Secrets (keys, tokens)
+.env
+*.key
+
+# Editor and OS
+.vscode/
+.idea/
+.spyproject/
+.DS_Store
+Thumbs.db
+
+# Stray raw downloads
+*.csv

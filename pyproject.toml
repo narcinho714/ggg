@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gb-da-forecast-dispatch"
+version = "0.1.0"
+description = "GB day-ahead power price forecasting and battery dispatch: measuring the value of a forecast."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.2",
+    "scipy>=1.11",          # linprog (HiGHS) for the battery dispatch LP
+    "scikit-learn>=1.4",    # baselines and evaluation helpers
+    "lightgbm>=4.3",        # gradient-boosted forecast model
+    "pyyaml>=6.0",          # config/config.yaml
+    "requests>=2.31",       # API downloads (Elexon, NESO, Open-Meteo)
+    "pyarrow>=15.0",        # parquet cache
+    "tzdata>=2024.1",       # IANA timezone data (needed on Windows)
+]
+
+[project.optional-dependencies]
+dashboard = [
+    "streamlit>=1.35",
+    "plotly>=5.20",
+    "matplotlib>=3.8",
+]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.5",
+]
+
+[tool.setuptools.packages.find]
+include = ["src*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]

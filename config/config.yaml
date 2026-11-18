@@ -1,0 +1,76 @@
+# config/config.yaml
+# Single source of truth for every setting that changes a result.
+# Code reads values from here; nothing below should be hard-coded in src/.
+# Values marked TBD are deliberately empty until confirmed.
+
+project:
+  name: value-of-a-forecast
+  random_seed: 42                 # fixed so reruns give identical numbers
+
+paths:
+  raw_prices: data/raw/neso_n2ex_gb_da.csv
+  raw_dir: data/raw
+  cache_dir: data/cache
+  outputs_dir: reports
+
+market:
+  name: GB day-ahead (N2EX hourly auction)
+  price_unit: GBP/MWh             # confirmed
+  file_timezone: UTC              # confirmed
+  delivery_timezone: Europe/London
+  gate_closure_local: null        # TBD: confirm from exchange rules before week 3
+  price_source:
+    dataset_id: day-ahead-power-exchange-prices-nordpool
+    resource_id: 4f27eea5-7038-4f73-9740-e3e4ad47c26a
+    retrieved: "2026-11-17"       # change if downloaded on a different day
+    licence: NESO Open Data Licence v1.0
+    attribution: "Supported by National Energy SO Open Data"
+
+data_window:
+  price_file_first_period_utc: "2021-09-20 22:00"
+  price_file_last_period_utc: "2026-11-17 22:00"
+  drop_truncated_edge_days: true  # first and last day are incomplete, excluded
+  # Regimes for the with/without sensitivity runs
+  crisis_period:
+    start: "2021-09-20"
+    end: "2022-12-31"
+  run_without_crisis_period: true
+
+battery:                          # hypothetical asset, illustrative defaults
+  power_mw: 1.0
+  energy_mwh: 2.0
+  round_trip_efficiency: 0.85
+  soc_min_fraction: 0.10
+  soc_max_fraction: 0.90
+  max_cycles_per_day: 1
+  end_of_day_soc_fraction: 0.50   # TBD: confirm this target before M1 headline
+  degradation_cost_gbp_per_mwh: 0.0   # TBD: placeholder, set a documented value before M1 headline
+
+solver:
+  name: highs                     # via scipy.optimize.linprog
+  time_limit_seconds: 30
+
+features:                         # sources chosen, details filled in week 3
+  weather:
+    provider: open-meteo
+    model: ukmo_seamless          # NOTE: only ~93 days of history, TBD: choose history approach (see DATA.md)
+    timezone: UTC
+    wind_speed_unit: ms           # Open-Meteo default is km/h, so set explicitly
+    history_approach: null        # TBD: one of published_forecasts | other_model_archive | reanalysis_proxy (decide before week 3)
+    locations: []                 # TBD: representative GB wind/solar/demand points
+  demand:
+    provider: neso_demand_data_update   # rolling window only, see DATA.md
+    history_source: null          # TBD: NESO historic demand dataset, check coverage
+  extra_source_delay_hours:
+    ukmo: 4                       # UKMO open data is published with ~4 hour delay
+
+forecast_cutoff:
+  forecast_made_on: D-1           # forecasts for day D use data published before gate closure on D-1
+
+validation:
+  scheme: walk_forward            # no random splits, ever
+  min_train_days: null            # TBD: set in week 4
+  step_days: null                 # TBD: set in week 4
+
+metrics:
+  near_zero_denominator_gbp_per_mw_day: null   # TBD: threshold for value-captured ratio
