@@ -57,7 +57,7 @@ Raw data is not committed (`data/` is git-ignored). Settings live in `config/con
 - **Resolution:** half-hourly settlement periods. `SETTLEMENT_DATE` and `SETTLEMENT_PERIOD` (period 1 = 00:00-00:30). **Local settlement time confirmed:** 25 Oct 2026 has 50 periods (autumn clock change). One other date has 47 rows and has not been traced. `[check before ingest]`
 - **Useful columns:** `ND`, `TSD` (MW); `FORECAST_ACTUAL_INDICATOR` (A or F); `EMBEDDED_WIND_GENERATION`, `EMBEDDED_WIND_CAPACITY`, `EMBEDDED_SOLAR_GENERATION`, `EMBEDDED_SOLAR_CAPACITY`.
 - **Interconnector flows** (`IFA_FLOW`, `BRITNED_FLOW`, etc.) are outturn. Not allowed as day-ahead features (leakage).
-- **Licence:** NESO Open Data Licence v1.0, same terms and attribution as section 1. Licence text reviewed 18 Nov 2026. The licence page says each dataset is licensed individually; the dataset's own "Rights" field is recorded here as the same licence `[confirm the Rights field wording on the dataset page; change this line if it differs]`.
+- **Licence:** NESO Open Data Licence v1.0, same terms and attribution as section 1. Licence text reviewed 18 Nov 2026. The licence page says each dataset is licensed individually; the dataset's own "Rights" field was checked on 18 Nov 2026 and reads "NESO Open Data Licence", linking to the licence page above (v1.0).
 - **Attribution used:** "Supported by National Energy SO Open Data". NESO logos and trademarks are not used and no endorsement by NESO is implied.
 
 | Issue | Rule |
@@ -107,7 +107,7 @@ Record the choice here, in `config.yaml` (`features.weather.history_approach`), 
 - [x] Price file timezone: UTC
 - [x] Price units: GBP/MWh
 - [x] Price dataset name, retrieval date, licence (NESO Open Data Licence v1.0)
-- [x] NESO demand licence terms reviewed (18 Nov 2026) `[confirm the "Rights" field wording on the dataset page]`
+- [x] NESO demand licence: Rights field checked on the dataset page (18 Nov 2026), NESO Open Data Licence v1.0
 - [x] Demand Data Update file profiled (18 Nov 2026): rolling window, not a training source
 - [x] Add the NESO attribution line to the README acknowledgements
 - [ ] Gate-closure time (needed before week 3)

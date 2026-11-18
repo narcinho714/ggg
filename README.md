@@ -95,7 +95,7 @@ Build order: **a thin end-to-end slice first** (prices, then battery, then forec
 | `DATA.md` with sources, findings, handling rules and open items | Done |
 | `config/config.yaml` and `.gitignore` drafted | Done |
 | Feature sources reviewed (NESO demand, Open-Meteo UKMO) | Done |
-| NESO Demand Data Update file profiled (rolling window, not a training source) and licence terms recorded | Done |
+| NESO Demand Data Update file profiled (rolling window, not a training source), Rights field checked (NESO Open Data Licence) and licence terms recorded | Done |
 | Git repository created, commits pushed to GitHub | Done |
 | `pytest` verified from a clean clone on Python 3.13 (11 passed with data; data tests skip cleanly without it) | Done |
 | Python version range documented (3.10 to 3.14, 3.13 recommended) | Done |
@@ -244,7 +244,7 @@ git clone https://github.com/narcinho714/ggg.git
 cd ggg
 python -m venv .venv               # use Python 3.13; on Windows: py -3.13 -m venv .venv
 source .venv/bin/activate          # Windows PowerShell: .\.venv\Scripts\Activate.ps1
-pip install -e ".[dev]"            # or: pip install -r requirements.txt
+pip install -e ".[dev]"            # or: pip install -r requirements.txt (a pointer to pyproject.toml)
 
 # download "N2EX GB Day-Ahead Price" from the NESO data portal and save it as
 # data/raw/neso_n2ex_gb_da.csv, then:
@@ -283,7 +283,7 @@ Add `pip install -e ".[dashboard]"` from week 8. Data-dependent tests are skippe
 **Supported by National Energy SO Open Data.**
 
 - Day-ahead prices: National Energy System Operator (NESO), dataset "Day-Ahead Power Exchange prices (Nord Pool)", file "N2EX GB Day-Ahead Price", retrieved 17 Nov 2026. Licensed under the [NESO Open Data Licence v1.0](https://www.neso.energy/data-portal/neso-open-licence). Delivery periods are UTC and prices are in GBP/MWh.
-- Demand data: National Energy System Operator (NESO), "Demand Data Update", retrieved 18 Nov 2026. Licensed under the [NESO Open Data Licence v1.0](https://www.neso.energy/data-portal/neso-open-licence). Used for sanity checks only; not a training source. Other NESO demand datasets will be attributed here when added.
+- Demand data: National Energy System Operator (NESO), "Demand Data Update", retrieved 18 Nov 2026. The dataset's Rights field (checked 18 Nov 2026) links to the [NESO Open Data Licence](https://www.neso.energy/data-portal/neso-open-licence), v1.0. Used for sanity checks only; not a training source. Other NESO demand datasets will be attributed here when added.
 - Generation data: Elexon Insights / BMRS `[add attribution]`.
 - Weather: Open-Meteo, UK Met Office model data (CC BY-SA 4.0) `[add exact attribution wording; update if another weather source is chosen]`.
 - NESO logos and trademarks are not used, and NESO does not endorse this project.
