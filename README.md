@@ -161,7 +161,7 @@ Raw data is not committed, to keep the repository small and the pipeline reprodu
 - **Settlement:** scheduled volumes are assumed to clear at the actual day-ahead price. No order-book, partial-fill or route-to-market effects.
 - **Information timing:** forecasts for delivery day D use only information published before the day-ahead gate closure on D-1. The gate-closure time is `[TBD: confirm from exchange rules]`.
 - **Delivery day:** the `Europe/London` calendar day, so some days have 23 or 25 hours.
-- **Asset:** 20 MW / 20 MWh, 85% round-trip efficiency, state of charge 10-90%, 50% start and end of day, up to 1 cycle a day, degradation cost £5/MWh discharged (placeholder; sensitivity-tested £0-£30). Illustrative, set in the config.
+- **Asset:** 20 MW / 20 MWh, 85% round-trip efficiency, state of charge 10-90%, 10% start and end of day, up to 1 cycle a day, degradation cost £5/MWh discharged (placeholder; sensitivity-tested £0-£30). Illustrative, set in the config.
 - **Excluded:** ancillary and balancing revenue, intraday, network charges and taxes.
 
 ---

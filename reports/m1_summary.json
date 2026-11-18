@@ -1,0 +1,24 @@
+{
+  "perfect_foresight": {
+    "days": 1883,
+    "mean_gbp_per_mw_day": 54.02217048250499,
+    "median_gbp_per_mw_day": 35.617378008329524,
+    "total_gbp": 2034474.940371138,
+    "worst_day_gbp_per_mw": 0.0,
+    "profitable_days_pct": 99.94689325544344,
+    "top5pct_days_share_of_positive_value": 0.2475432698904638,
+    "days_with_multiple_charge_blocks": 0,
+    "days_with_multiple_discharge_blocks": 0
+  },
+  "benchmark": {
+    "days": 1883,
+    "mean_gbp_per_mw_day": 11.776593508065886,
+    "median_gbp_per_mw_day": 1.499423324442573,
+    "total_gbp": 443506.51151376124,
+    "worst_day_gbp_per_mw": -89.65301960729421,
+    "profitable_days_pct": 52.681890600106215,
+    "top5pct_days_share_of_positive_value": 0.4013560251167691,
+    "days_with_multiple_charge_blocks": 0,
+    "days_with_multiple_discharge_blocks": 0
+  }
+}
