@@ -10,6 +10,8 @@ DATA = Path(__file__).resolve().parents[1] / "data" / "raw" / "neso_n2ex_gb_da.c
 
 @pytest.fixture(scope="module")
 def prices():
+    if not DATA.exists():
+        pytest.skip("raw price file not present; see README quick start")
     return load_prices(DATA)
 
 
