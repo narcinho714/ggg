@@ -1,6 +1,6 @@
 # Value of a Forecast: GB Day-Ahead Power Price Forecasting and Battery Dispatch
 
-> **Status:** Week 1 of 9 (updated 17 Nov 2026). Price data profiled and licence confirmed, loader and tests complete, config and data notes drafted. Everything marked `[TBD]` is filled in only from reproducible runs. Do not publish headline numbers until they come from a clean run.
+> **Status:** Week 1 of 9 complete (updated 18 Nov 2026). Price data profiled and licence confirmed, loader and tests complete, config and data notes done, repository published and verified from a clean clone on Python 3.13. Everything marked `[TBD]` is filled in only from reproducible runs. Do not publish headline numbers until they come from a clean run.
 
 A reproducible research project that asks one practical trading question:
 
@@ -32,9 +32,9 @@ The project forecasts GB day-ahead prices, turns the forecasts into a battery ch
 ## 2. What you need before starting
 
 **Software**
-- Python **3.10 or newer**
+- Python **3.13** (supported range 3.10 to 3.14). Python 3.15 is not supported yet: some dependencies, such as PyYAML, had no pre-built wheels for it at the time of writing and fail to build.
 - Git, and a GitHub account to publish the repository
-- A code editor (VS Code or similar)
+- A code editor (VS Code, Spyder or similar). If using Spyder, point it at the project's `.venv` interpreter and install `spyder-kernels==3.1.*` in that environment.
 - Around 2 GB free disk space for raw and cached data
 
 **Accounts and keys**
@@ -95,14 +95,14 @@ Build order: **a thin end-to-end slice first** (prices, then battery, then forec
 | `DATA.md` with sources, findings, handling rules and open items | Done |
 | `config/config.yaml` and `.gitignore` drafted | Done |
 | Feature sources reviewed (NESO demand, Open-Meteo UKMO) | Done |
+| NESO Demand Data Update file profiled (rolling window, not a training source) and licence terms recorded | Done |
+| Git repository created, commits pushed to GitHub | Done |
+| `pytest` verified from a clean clone on Python 3.13 (11 passed with data; data tests skip cleanly without it) | Done |
+| Python version range documented (3.10 to 3.14, 3.13 recommended) | Done |
 
 ### Still to do in week 1
 
-| Item | Status |
-|---|---|
-| Create the git repository and first commit | To do |
-| Run `pytest` from a clean checkout | To do |
-| Check the "Rights" field on the NESO Demand Data Update dataset page | To do |
+None.
 
 ### Decisions pending (needed before week 3, not week 2)
 
@@ -110,6 +110,7 @@ Build order: **a thin end-to-end slice first** (prices, then battery, then forec
 |---|---|
 | Gate-closure time | Confirm from exchange rules. Currently `null` in the config. |
 | Weather-history approach | UKMO via Open-Meteo covers about 93 days only. Options are in `DATA.md` section 3. |
+| Half-hourly to hourly mapping for demand and wind/solar inputs | NESO demand data uses GB settlement periods (48 a day, 50 on the October clock change); prices are hourly UTC. Map periods to UTC and aggregate before joining. |
 
 ---
 
@@ -147,10 +148,10 @@ Build order: **a thin end-to-end slice first** (prices, then battery, then forec
 
 **Weather-history decision (open).** Options, in the order they will be checked: (1) published day-ahead forecasts with publication times, (2) another Open-Meteo model through its historical forecast archive, (3) reanalysis as an optimistic proxy, clearly labelled, (4) the 93-day UKMO window only for recent sanity checks. The choice will be recorded here and in the limitations.
 
-**Not used for training.** The NESO Demand Data Update is a rolling window (previous month to today, plus a 7-day-ahead embedded wind and solar forecast), so it cannot supply the 2021-2026 history. Its interconnector flow columns are outturn and are never used as day-ahead features.
+**Not used for training.** The NESO Demand Data Update (retrieved 18 Nov 2026) is a rolling window, so it cannot supply the 2021-2026 history. The file profiled covers 1 Oct to 24 Nov 2026 in half-hourly GB settlement periods. Its forecast rows carry embedded wind and solar only (demand fields are zero), and it has no publication timestamps, so it is unusable as a leakage-safe feature source. Its interconnector flow columns are outturn and are never used as day-ahead features. Embedded wind capacity changes between its actual and forecast rows and must be checked before any use.
 
 Elexon's Market Index Price is not the day-ahead auction price and is never used as the target.
-Raw data is not committed. `data/` is git-ignored.
+Raw data is not committed, to keep the repository small and the pipeline reproducible from the config. This is a project choice: the NESO licence would permit redistribution with attribution. `data/` is git-ignored.
 
 ---
 
@@ -215,11 +216,11 @@ Raw data is not committed. `data/` is git-ignored.
 ├── README.md
 ├── DATA.md                     # done: sources, findings, handling rules, open items
 ├── .gitignore                  # done
-├── pyproject.toml
+├── pyproject.toml              # done: requires-python >=3.10,<3.15
 ├── requirements.txt
 ├── config/
 │   └── config.yaml             # drafted: dates, asset parameters, sources, model settings
-├── data/                       # git-ignored; raw/ holds the NESO CSV
+├── data/                       # git-ignored; raw/ holds the NESO CSVs
 ├── src/
 │   ├── ingest/prices.py        # done: loader and validation
 │   ├── features/               # planned
@@ -239,18 +240,18 @@ Raw data is not committed. `data/` is git-ignored.
 ## 11. Quick start
 
 ```bash
-git clone [repo-url]
-cd [repo-name]
-python -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
+git clone https://github.com/narcinho714/ggg.git
+cd ggg
+python -m venv .venv               # use Python 3.13; on Windows: py -3.13 -m venv .venv
+source .venv/bin/activate          # Windows PowerShell: .\.venv\Scripts\Activate.ps1
 pip install -e ".[dev]"            # or: pip install -r requirements.txt
 
 # download "N2EX GB Day-Ahead Price" from the NESO data portal and save it as
 # data/raw/neso_n2ex_gb_da.csv, then:
-pytest
+python -m pytest -v
 ```
 
-Add `pip install -e ".[dashboard]"` from week 8. Data-dependent tests are skipped if the raw file is missing.
+Add `pip install -e ".[dashboard]"` from week 8. Data-dependent tests are skipped if the raw file is missing (expect `1 passed, 10 skipped` without it and `11 passed` with it).
 
 ---
 
@@ -258,10 +259,12 @@ Add `pip install -e ".[dashboard]"` from week 8. Data-dependent tests are skippe
 
 - Timestamp handling, clock-change days (23 and 25 hours), contiguity and completeness (done).
 - Truncated edge days are never mistaken for clock-change days (done).
+- Data-dependent tests skip cleanly when the raw file is absent (done).
 - Leakage test: no feature uses information published after the cut-off (week 3-4).
 - Battery tests: state of charge within limits, no simultaneous charge and discharge, energy balance (week 2).
 - Backtest tests: forecast-driven decisions use forecasts; perfect foresight stays separate (week 6).
 - Fixed random seeds and pinned versions (`pip freeze` after the first full run).
+- Note: two price tests assert on the last date of the current CSV (2026-11-17). They will need updating when the file is refreshed.
 
 ---
 
@@ -280,8 +283,10 @@ Add `pip install -e ".[dashboard]"` from week 8. Data-dependent tests are skippe
 **Supported by National Energy SO Open Data.**
 
 - Day-ahead prices: National Energy System Operator (NESO), dataset "Day-Ahead Power Exchange prices (Nord Pool)", file "N2EX GB Day-Ahead Price", retrieved 17 Nov 2026. Licensed under the [NESO Open Data Licence v1.0](https://www.neso.energy/data-portal/neso-open-licence). Delivery periods are UTC and prices are in GBP/MWh.
-- Demand data: NESO data portal, NESO Open Data Licence v1.0 `[verify the Rights field on each dataset page]`. Generation data: Elexon Insights / BMRS `[add attribution]`.
+- Demand data: National Energy System Operator (NESO), "Demand Data Update", retrieved 18 Nov 2026. Licensed under the [NESO Open Data Licence v1.0](https://www.neso.energy/data-portal/neso-open-licence). Used for sanity checks only; not a training source. Other NESO demand datasets will be attributed here when added.
+- Generation data: Elexon Insights / BMRS `[add attribution]`.
 - Weather: Open-Meteo, UK Met Office model data (CC BY-SA 4.0) `[add exact attribution wording; update if another weather source is chosen]`.
+- NESO logos and trademarks are not used, and NESO does not endorse this project.
 - Inspired by the open-source [EpexPredictor](https://github.com/b3nn0/EpexPredictor); this is an independent implementation with a different scope.
 
 ## 15. Author

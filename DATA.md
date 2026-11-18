@@ -3,8 +3,7 @@
 Source, findings and handling rules for every dataset in this project.
 Raw data is not committed (`data/` is git-ignored). Settings live in `config/config.yaml`.
 
-> This file was rebuilt on 17 Nov 2026 from the README (section 5.1) plus the new feature-source reviews.
-> Compare it with any earlier DATA.md before overwriting, and keep any detail from the old one that is missing here.
+> History: rebuilt on 17 Nov 2026 from the README (section 5.1) plus the feature-source reviews. Updated on 18 Nov 2026 with the profiled Demand Data Update file and the licence review.
 
 ---
 
@@ -17,6 +16,7 @@ Raw data is not committed (`data/` is git-ignored). Settings live in `config/con
 - **Licence:** NESO Open Data Licence v1.0 (the dataset page lists its rights as this licence). Based on the Open Government Licence v3.0. Free to copy, publish, adapt and use commercially, including by combining with other data.
 - **Required attribution:** "Supported by National Energy SO Open Data". Must appear in the README and anywhere results are published.
 - **Other licence conditions:** protect NESO's logos and trademarks, do not suggest NESO endorses the project. Data is provided as-is with no warranty. NESO can revise the licence without notice, so keep the retrieval date.
+- **Redistribution:** the licence would permit it with attribution. Raw data is kept out of git as a project choice (size, reproducibility from config), not a licence requirement.
 - **Licence page:** https://www.neso.energy/data-portal/neso-open-licence
 - **Timezone:** **UTC (confirmed)**
 - **Units:** **GBP/MWh (confirmed)**
@@ -42,26 +42,31 @@ Raw data is not committed (`data/` is git-ignored). Settings live in `config/con
 | Truncated first and last day | Excluded from backtests, never mistaken for clock-change days. |
 | Regimes: about 198-204 GBP/MWh in 2021-22 vs 73-113 from 2023 to 2026 | Run models and battery results with and without 2021-22. |
 | Negative prices and spikes | Keep them. Report error and value for these periods separately. |
+| Refreshing the CSV | Two tests assert on the last date of the current file (2026-11-17). Update them when the file is refreshed. |
 
 ---
 
-## 2. Feature sources (reviewed 17 Nov 2026, not yet ingested)
+## 2. Feature sources (reviewed 17-18 Nov 2026, not yet ingested)
 
 ### 2.1 NESO Demand Data Update
 
 - **Page:** https://www.neso.energy/data-portal/daily-demand-update/demand_data_update
 - **Access:** CSV download or CKAN API (`api.neso.energy`), no key seen.
-- **Coverage:** outturn from the first day of the previous month to today, plus a 7-day-ahead forecast of embedded wind and solar. Usually updated daily by 08:30 UTC.
-- **Resolution:** half-hourly settlement periods. `SETTLEMENT_DATE` and `SETTLEMENT_PERIOD` (period 1 = 00:00-00:30), assumed local time. `[confirm]`
+- **Retrieved:** 18 Nov 2026. Suggested local path: `data/raw/demand_data_update_2026-11-18.csv` (ignored by git).
+- **Coverage (profiled file):** 1 Oct to 24 Nov 2026, 2,641 rows, 23 columns, no missing values. Outturn (`A`) rows run to 18 Nov period 16 (2,321 rows). Forecast (`F`) rows run from 18 Nov period 17 to 24 Nov (320 rows). Usually updated daily by 08:30 UTC.
+- **Resolution:** half-hourly settlement periods. `SETTLEMENT_DATE` and `SETTLEMENT_PERIOD` (period 1 = 00:00-00:30). **Local settlement time confirmed:** 25 Oct 2026 has 50 periods (autumn clock change). One other date has 47 rows and has not been traced. `[check before ingest]`
 - **Useful columns:** `ND`, `TSD` (MW); `FORECAST_ACTUAL_INDICATOR` (A or F); `EMBEDDED_WIND_GENERATION`, `EMBEDDED_WIND_CAPACITY`, `EMBEDDED_SOLAR_GENERATION`, `EMBEDDED_SOLAR_CAPACITY`.
 - **Interconnector flows** (`IFA_FLOW`, `BRITNED_FLOW`, etc.) are outturn. Not allowed as day-ahead features (leakage).
-- **Licence:** NESO Open Data Licence v1.0 (same terms and attribution as section 1), as supplied by the project owner on 17 Nov 2026. The licence page says each dataset is licensed individually, so check the "Rights" field on this dataset's own page. `[verify]`
+- **Licence:** NESO Open Data Licence v1.0, same terms and attribution as section 1. Licence text reviewed 18 Nov 2026. The licence page says each dataset is licensed individually; the dataset's own "Rights" field is recorded here as the same licence `[confirm the Rights field wording on the dataset page; change this line if it differs]`.
+- **Attribution used:** "Supported by National Energy SO Open Data". NESO logos and trademarks are not used and no endorsement by NESO is implied.
 
 | Issue | Rule |
 |---|---|
-| Rolling window only: cannot give 2021-2026 history | Do not use for training. Find a long-history source (NESO historic demand dataset, `[check coverage]`). Use this dataset for recent or live checks only. |
+| Rolling window only (about 7 weeks in the profiled file): cannot give 2021-2026 history | Do not use for training. Find a long-history source (NESO historic demand dataset, `[check coverage]`). Use this dataset for recent or live checks only. |
+| `F` rows carry embedded wind and solar only: `ND`, `TSD` and `ENGLAND_WALES_DEMAND` are zero in every forecast row | There is no demand forecast in this file. Source demand forecasts from NESO "Historic Day Ahead Demand Forecasts". |
 | Half-hourly local-time settlement periods | Convert to UTC timestamps first, then aggregate to hourly (mean MW). Clock-change days have 46 or 50 periods: test explicitly, as for prices. |
 | `F` rows are an overwritten snapshot with no publication time | Cannot prove what was known at D-1 gate closure. Treat as a limitation, or log snapshots daily from now on. |
+| `EMBEDDED_WIND_CAPACITY` differs between actual and forecast rows (6417 early in the file vs 5908 in forecast rows) | Probably an estimation change. Do not use as a clean feature until understood. |
 | Embedded wind and solar are modelled estimates | Label as NESO estimates, not metered output. |
 | No transmission-metered wind | Source separately (Elexon Insights / BMRS), `[check]`. |
 
@@ -102,7 +107,10 @@ Record the choice here, in `config.yaml` (`features.weather.history_approach`), 
 - [x] Price file timezone: UTC
 - [x] Price units: GBP/MWh
 - [x] Price dataset name, retrieval date, licence (NESO Open Data Licence v1.0)
-- [x] NESO demand licence wording (verify "Rights" field on the dataset page)
-- [ ] Add the NESO attribution line to the README acknowledgements
+- [x] NESO demand licence terms reviewed (18 Nov 2026) `[confirm the "Rights" field wording on the dataset page]`
+- [x] Demand Data Update file profiled (18 Nov 2026): rolling window, not a training source
+- [x] Add the NESO attribution line to the README acknowledgements
 - [ ] Gate-closure time (needed before week 3)
 - [ ] Weather-history approach (section 3, needed before week 3)
+- [ ] Trace the date with 47 rows in the Demand Data Update file, and map settlement periods to UTC (week 3)
+- [ ] Understand the `EMBEDDED_WIND_CAPACITY` change between actual and forecast rows (week 3)
