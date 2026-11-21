@@ -12,11 +12,12 @@ skipped on clock-change days, so the same pattern is valid on 23-, 24- and
 from __future__ import annotations
 
 import numpy as np
+import pandas as pd
 
 from src.dispatch.battery import BatteryParams, Schedule, soc_path
 
-DEFAULT_CHARGE_HOURS = (2, 3, 4, 5)
-DEFAULT_DISCHARGE_HOURS = (16, 17, 18, 19)
+DEFAULT_CHARGE_HOURS = (4,)  # delivery during peak hours to better represent forecast
+DEFAULT_DISCHARGE_HOURS = (18,)  # delivery during peak hours to better represent forecast
 
 
 def fixed_window_schedule(
