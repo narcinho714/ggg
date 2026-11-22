@@ -18,6 +18,7 @@ dependencies = [
     "requests>=2.31",       # API downloads (Elexon, NESO, Open-Meteo)
     "pyarrow>=15.0",        # parquet cache
     "tzdata>=2024.1",       # IANA timezone data (needed on Windows)
+    "holidays>=0.40",
 ]
 
 [project.optional-dependencies]

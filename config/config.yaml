@@ -18,7 +18,8 @@ market:
   price_unit: GBP/MWh             # confirmed
   file_timezone: UTC              # confirmed
   delivery_timezone: Europe/London
-  gate_closure_local: null        # TBD: confirm from exchange rules before week 3
+  gate_closure_local: "09:50"
+  forecast_cutoff_buffer_minutes: 0
   price_source:
     dataset_id: day-ahead-power-exchange-prices-nordpool
     resource_id: 4f27eea5-7038-4f73-9740-e3e4ad47c26a
