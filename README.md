@@ -1,6 +1,6 @@
 # Value of a Forecast: GB Day-Ahead Power Price Forecasting and Battery Dispatch
 
-> **Status:** Weeks 1-3 of 9 complete (updated 25 Nov 2026). Price loader, battery model, benchmark and perfect-foresight ceiling (**M1**) are done. Week 3 built a leak-safe hourly feature table (907 complete days, 2 Jan 2023 to 29 Mar 2026) with an automated leakage test. Forecasting starts in week 4. Everything marked `[TBD]` is filled in only from reproducible runs.
+> **Status:** Weeks 1-4 of 9 complete (updated 27 Nov 2026). **M1** (battery ceiling and benchmark) and **M2** (baseline forecast accuracy) are done. Week 3 built a leak-safe hourly feature table (907 complete days, 2 Jan 2023 to 29 Mar 2026); week 4 scored naive and ridge forecasts on it under walk-forward validation. LightGBM is next (week 5). Everything marked `[TBD]` is filled in only from reproducible runs.
 
 A reproducible research project that asks one practical trading question:
 
@@ -97,15 +97,17 @@ Build order: **a thin end-to-end slice first** (prices, then battery, then forec
 | Forecast cut-off rule (09:50 UK time on D-1) in config and code | Done (week 3) |
 | Loaders: demand forecast, embedded wind/solar, transmission wind | Done (week 3) |
 | Calendar and lagged-price features | Done (week 3) |
-| Feature table (907 days) and leakage test; 67 tests in total | Done (week 3) |
+| Feature table (907 days) and leakage test | Done (week 3) |
+| Walk-forward splitter, naive and ridge baselines, scoring incl. hour-pick regret; 72 tests in total | Done (week 4) |
+| **M2:** baseline accuracy table | Done (section 8.2) |
 
 ### Still to do
 
 | Item | When |
 |---|---|
-| Naive and linear baselines, walk-forward validation (**M2**) | Week 4 |
+| LightGBM and error analysis by hour, season and regime | Week 5 |
 | Re-run M1 on the 907 feature-table days so all strategies share one set of days | Week 6 |
-| Clean-clone re-run of M1 and the feature build | Before week 4 closes |
+| Clean-clone re-run of M1, the feature build and M2 | Before week 5 closes |
 | Fill the author section (section 15) | Any time; the repository is public |
 
 ---
@@ -184,7 +186,7 @@ Raw data is not committed, to keep the repository small and the pipeline reprodu
 
 **Features.** Built only from information available at the cut-off (section 5.2). Each row stores the issue time of every forecast it uses, and `check_no_leakage` fails the build and the tests if any is later than the cut-off.
 
-**Forecasting.** Naive (same hour yesterday or last week), regularised linear, and LightGBM. Walk-forward validation only, with no random splits. Report MAE, RMSE and bias overall and by hour, season, wind/solar/demand condition and price level, including negative-price and spike periods.
+**Forecasting.** Naive (same hour yesterday or last week), ridge regression, and LightGBM. Walk-forward validation only, with no random splits: the first model trains on the first 365 days of the feature table, forecasts the next 28, is refitted with those days added, and so on (20 folds, 542 test days). `min_train_days` and `step_days` are in the config. Scaling and missing-value filling are learned on training days only. Report MAE, RMSE and bias overall and by hour, plus **hour-pick scores**: how often the forecast picks each day's cheapest and dearest hour, and the **regret** (£/MWh lost, at actual prices, by using the forecast's pick instead of the best hour). Also by season, wind/solar/demand condition and price level, including negative-price and spike periods.
 
 **Scenarios.** One trained model, re-run with a few documented changes to wind, solar and demand inputs. Adjustment sizes come from historical forecast errors or are clearly labelled as illustrative stresses. Inputs stay within the training range because tree models cannot extrapolate. Scenarios are stresses, not calibrated probabilities.
 
@@ -194,6 +196,8 @@ Raw data is not committed, to keep the repository small and the pipeline reprodu
 - **Fixed-hour benchmark:** charges at 04:00 and discharges at 18:00 (Europe/London local time) every day, whatever the prices. The hours were chosen a priori as a plausible overnight low and evening peak, not fitted to the data. Because it ignores prices it is deliberately simple.
 - **Forecast-driven schedule (week 6):** optimised on forecast prices, then paid at actual prices.
 - **Perfect foresight:** the same optimiser given each day's actual prices. It picks different hours every day and may skip days where the spread does not cover the degradation cost. It is an unattainable upper bound, not a forecast.
+
+**Headline model rule (fixed before any forecast-driven backtest).** The headline forecast-driven result uses the model with the lowest combined cheapest- and dearest-hour regret in the walk-forward validation. Every model's battery result is reported as well. The rule is set in advance so that the headline is not picked after seeing which model earned most.
 
 **Metrics.** Net revenue per MW per day (net £ ÷ 20 MW, averaged over complete delivery days); value captured = (forecast-driven − benchmark) ÷ (perfect foresight − benchmark), reported on aggregated periods and handled explicitly where the denominator is near zero; worst days and drawdown; percentage of profitable days; share of value from the top 5% of days.
 
@@ -223,7 +227,22 @@ Window: 1 Jan 2023 onwards, 1,416 complete delivery days, 20 MW / 20 MWh battery
 Outputs: `reports/m1_summary_from_2023-01-01.json` and `reports/m1_ceiling_from_2023-01-01.png`. Daily detail is written to `data/cache/` (git-ignored).
 
 ### 8.2 Forecast accuracy (M2)
-`[TBD]`
+
+Walk-forward validation: 20 folds, **542 test days (31 May 2024 to 29 Mar 2026)**, 13,007 hours, all models scored on the same hours. Errors are forecast minus actual, in £/MWh.
+
+| Metric | Naive: same hour yesterday | Naive: same hour last week | Ridge |
+|---|---|---|---|
+| MAE | 17.83 | 22.28 | **14.74** |
+| RMSE | 32.68 | 38.72 | **23.81** |
+| Bias | +0.08 | +0.22 | -6.40 |
+| Cheapest hour picked exactly | 18.5% | 17.0% | **31.0%** |
+| Dearest hour picked exactly | 45.2% | 44.3% | **53.7%** |
+| Cheapest-hour regret | 12.62 | 10.80 | **4.84** |
+| Dearest-hour regret | 6.81 | 6.73 | **2.36** |
+
+**How to read this.** Ridge cuts the typical error by about 17% against "same hour yesterday", and cuts regret, the score closest to battery value, by over 60%. RMSE well above MAE shows that a few spike hours cause the largest misses. Random hour-picking would be right about 4% of the time. Ridge under-forecasts by about £6/MWh on average, probably because a linear model cannot reach price spikes; a uniform shift does not change which hours are picked, so it matters little for the battery. To be examined in week 5.
+
+Outputs: `reports/m2_baselines.json`, `reports/m2_mae_by_hour.csv`. Forecasts for week 6: `data/cache/m2_predictions.parquet` (git-ignored). Reproduce with `python -m src.forecast.run_m2`.
 
 ### 8.3 Dispatch value and value captured (M3)
 `[TBD]`
@@ -288,7 +307,11 @@ Outputs: `reports/m1_summary_from_2023-01-01.json` and `reports/m1_ceiling_from_
 │   ├── features/
 │   │   ├── basic.py            # done: calendar and lagged prices
 │   │   └── build.py            # done: feature table and leakage check
-│   ├── forecast/               # planned (weeks 4-5)
+│   ├── forecast/
+│   │   ├── splits.py           # done: walk-forward folds
+│   │   ├── baselines.py        # done: naive and ridge forecasts
+│   │   ├── evaluate.py         # done: MAE, RMSE, bias, hit rate, regret
+│   │   └── run_m2.py           # done: M2 entry point
 │   ├── scenarios/              # planned (week 7)
 │   └── reporting/              # planned
 ├── app/dashboard.py            # planned: Streamlit (week 8)
@@ -296,8 +319,9 @@ Outputs: `reports/m1_summary_from_2023-01-01.json` and `reports/m1_ceiling_from_
 ├── tests/
 │   ├── test_prices.py          # done: 11 tests
 │   ├── test_dispatch.py        # done: 53 tests
-│   └── test_features.py        # done: leakage and completeness tests
-└── reports/                    # M1 summary (JSON) and ceiling chart (PNG)
+│   ├── test_features.py        # done: leakage and completeness tests
+│   └── test_forecast.py        # done: walk-forward and regret tests
+└── reports/                    # M1 summary and chart, M2 accuracy table
 ```
 
 ---
@@ -321,9 +345,12 @@ python -m src.backtest.run_m1
 
 # build the feature table (needs the NESO feature files listed in DATA.md section 3)
 python -m src.features.build
+
+# M2: baseline forecasts and accuracy table
+python -m src.forecast.run_m2
 ```
 
-Add `pip install -e ".[dashboard]"` from week 8. Data-dependent tests are skipped if the raw file is missing: expect 67 passed with the price file and feature table present; data-dependent tests skip without them.
+Add `pip install -e ".[dashboard]"` from week 8. Data-dependent tests are skipped if the raw file is missing: expect 72 passed with the price file and feature table present; data-dependent tests skip without them.
 
 ---
 
@@ -334,6 +361,7 @@ Add `pip install -e ".[dashboard]"` from week 8. Data-dependent tests are skippe
 - Data-dependent tests skip cleanly when the raw file is absent (done).
 - Leakage test: no feature uses information published after the cut-off; the test also proves it catches a forecast stamped one minute late (done, week 3).
 - Battery tests: state of charge within limits, no simultaneous charge and discharge, energy balance, a hand-calculated revenue case, 23- and 25-hour days, and perfect foresight never below the benchmark (done, week 2).
+- Walk-forward tests: every training day precedes every test day, each day is tested once, and regret matches a hand calculation (done, week 4).
 - Backtest tests: forecast-driven decisions use forecasts; perfect foresight stays separate (week 6).
 - Fixed random seeds and pinned versions (`pip freeze` after the first full run).
 - Note: two price tests assert on the last date of the current CSV (2026-11-17). They will need updating when the file is refreshed.

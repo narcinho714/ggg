@@ -71,8 +71,8 @@ forecast_cutoff:
 
 validation:
   scheme: walk_forward            # no random splits, ever
-  min_train_days: null            # TBD: set in week 4
-  step_days: null                 # TBD: set in week 4
+  min_train_days: 365            # TBD: set in week 4
+  step_days: 28                 # TBD: set in week 4
 
 metrics:
   near_zero_denominator_gbp_per_mw_day: null   # TBD: threshold for value-captured ratio

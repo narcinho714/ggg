@@ -1,0 +1,44 @@
+{
+  "validation": {
+    "min_train_days": 365,
+    "step_days": 28,
+    "folds": 20,
+    "first_test_day": "2024-05-31",
+    "last_test_day": "2026-03-29"
+  },
+  "models": {
+    "naive_24h": {
+      "n_hours": 13007,
+      "mae": 17.834003196996488,
+      "rmse": 32.67619679228901,
+      "bias": 0.08401011634760774,
+      "n_days": 542,
+      "cheapest_hour_hit": 0.18450184501845018,
+      "dearest_hour_hit": 0.45202952029520294,
+      "cheapest_hour_regret": 12.615461254612546,
+      "dearest_hour_regret": 6.8099261992619935
+    },
+    "naive_168h": {
+      "n_hours": 13007,
+      "mae": 22.277889597908818,
+      "rmse": 38.71816130408275,
+      "bias": 0.21675328669178173,
+      "n_days": 542,
+      "cheapest_hour_hit": 0.16974169741697417,
+      "dearest_hour_hit": 0.44280442804428044,
+      "cheapest_hour_regret": 10.800424354243543,
+      "dearest_hour_regret": 6.72710332103321
+    },
+    "ridge": {
+      "n_hours": 13007,
+      "mae": 14.738868684134745,
+      "rmse": 23.812278639669632,
+      "bias": -6.396070346216762,
+      "n_days": 542,
+      "cheapest_hour_hit": 0.30996309963099633,
+      "dearest_hour_hit": 0.5369003690036901,
+      "cheapest_hour_regret": 4.844077490774908,
+      "dearest_hour_regret": 2.3643173431734317
+    }
+  }
+}
